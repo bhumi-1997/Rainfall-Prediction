@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rainfall Prediction</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(120deg, #fdfbfb 0%, #ebedee 100%);
+            color: #333;
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(to right, #1e5799, #207cca);
+            color: white;
+            padding: 25px 20px;
+            text-align: center;
+        }
+        
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 25px;
+        }
+        
+        .form-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #1e5799;
+        }
+        
+        input {
+            width: 100;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+        
+        input:focus {
+            border-color: #207cca;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(32, 124, 202, 0.2);
+        }
+        
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        button {
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        #predict-btn {
+            background: linear-gradient(to right, #1e5799, #207cca);
+            color: white;
+            flex: 1;
+            max-width: 200px;
+        }
+        
+        #reset-btn {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 2px solid #ddd;
+            flex: 1;
+            max-width: 200px;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        #predict-btn:hover {
+            background: linear-gradient(to right, #18467e, #1a6ba8);
+        }
+        
+        #reset-btn:hover {
+            background-color: #e9e9e9;
+        }
+        
+        .result-container {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .result-title {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #1e5799;
+        }
+        
+        .prediction {
+            font-size: 2rem;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .rainfall {
+            background-color: rgba(30, 87, 153, 0.1);
+            color: #1e5799;
+            border: 2px solid #1e5799;
+        }
+        
+        .no-rainfall {
+            background-color: rgba(46, 204, 113, 0.1);
+            color: #27ae60;
+            border: 2px solid #27ae60;
+        }
+        
+        .confidence {
+            font-size: 1.1rem;
+            margin-top: 10px;
+            color: #666;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #777;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+        }
+        
+        @media (max-width: 600px) {
+            .form-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .buttons {
+                flex-direction: column;
+            }
+            
+            button {
+                max-width: 100%;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Rainfall Prediction</h1>
+            <p class="subtitle">Enter weather parameters to predict rainfall probability</p>
+        </header>
+        
+        <div class="content">
+            <div class="form-container">
+                <div>
+                    <div class="input-group">
+                        <label for="pressure">Pressure (hPa)</label>
+                        <input type="number" id="pressure" placeholder="e.g., 1015.9" step="0.1" min="900" max="1100">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="dewpoint">Dew Point (°C)</label>
+                        <input type="number" id="dewpoint" placeholder="e.g., 19.9" step="0.1" min="-10" max="40">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="humidity">Humidity (%)</label>
+                        <input type="number" id="humidity" placeholder="e.g., 95" min="0" max="100">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="cloud">Cloud Cover (%)</label>
+                        <input type="number" id="cloud" placeholder="e.g., 81" min="0" max="100">
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="input-group">
+                        <label for="sunshine">Sunshine (hours)</label>
+                        <input type="number" id="sunshine" placeholder="e.g., 0.0" step="0.1" min="0" max="24">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="winddirection">Wind Direction (degrees)</label>
+                        <input type="number" id="winddirection" placeholder="e.g., 40.0" step="0.1" min="0" max="360">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="windspeed">Wind Speed (km/h)</label>
+                        <input type="number" id="windspeed" placeholder="e.g., 13.7" step="0.1" min="0" max="200">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Analyzing weather data...</p>
+            </div>
+            
+            <div class="buttons">
+                <button id="predict-btn">Predict Rainfall</button>
+                <button id="reset-btn">Reset Form</button>
+            </div>
+            
+            <div class="result-container" id="result-container">
+                <h2 class="result-title">Prediction Result</h2>
+                <div class="prediction" id="prediction-text">No Rainfall</div>
+                <p class="confidence" id="confidence-text">Confidence: 85%</p>
+            </div>
+        </div>
+        
+        <footer>
+            <p></p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const predictBtn = document.getElementById('predict-btn');
+            const resetBtn = document.getElementById('reset-btn');
+            const resultContainer = document.getElementById('result-container');
+            const predictionText = document.getElementById('prediction-text');
+            const confidenceText = document.getElementById('confidence-text');
+            const loading = document.getElementById('loading');
+            
+            // Set default values for demonstration
+            
+            // Predict button click handler
+            predictBtn.addEventListener('click', function() {
+                // Get input values
+                const pressure = parseFloat(document.getElementById('pressure').value);
+                const dewpoint = parseFloat(document.getElementById('dewpoint').value);
+                const humidity = parseFloat(document.getElementById('humidity').value);
+                const cloud = parseFloat(document.getElementById('cloud').value);
+                const sunshine = parseFloat(document.getElementById('sunshine').value);
+                const winddirection = parseFloat(document.getElementById('winddirection').value);
+                const windspeed = parseFloat(document.getElementById('windspeed').value);
+                
+                // Validate inputs
+                if (isNaN(pressure) || isNaN(dewpoint) || isNaN(humidity) || 
+                    isNaN(cloud) || isNaN(sunshine) || isNaN(winddirection) || isNaN(windspeed)) {
+                    alert('Please fill in all fields with valid numbers.');
+                    return;
+                }
+                
+                // Make API call to Flask backend
+                makePrediction(pressure, dewpoint, humidity, cloud, sunshine, winddirection, windspeed);
+            });
+            
+            // Reset button click handler
+            resetBtn.addEventListener('click', function() {
+                document.getElementById('pressure').value = '';
+                document.getElementById('dewpoint').value = '';
+                document.getElementById('humidity').value = '';
+                document.getElementById('cloud').value = '';
+                document.getElementById('sunshine').value = '';
+                document.getElementById('winddirection').value = '';
+                document.getElementById('windspeed').value = '';
+                
+                resultContainer.style.display = 'none';
+            });
+            
+            // Make prediction using Flask API
+            async function makePrediction(pressure, dewpoint, humidity, cloud, sunshine, winddirection, windspeed) {
+                // Show loading state
+                loading.style.display = 'block';
+                resultContainer.style.display = 'none';
+                
+                try {
+                    const response = await fetch('/predict', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            pressure: pressure,
+                            dewpoint: dewpoint,
+                            humidity: humidity,
+                            cloud: cloud,
+                            sunshine: sunshine,
+                            winddirection: winddirection,
+                            windspeed: windspeed
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    // Hide loading
+                    loading.style.display = 'none';
+                    
+                    if (response.ok) {
+                        // Update UI with result
+                        predictionText.textContent = data.message;
+                        predictionText.className = data.prediction === 1 ? 
+                            'prediction rainfall' : 'prediction no-rainfall';
+                        confidenceText.textContent = `Confidence: ${data.confidence}%`;
+                        resultContainer.style.display = 'block';
+                    } else {
+                        alert('Error: ' + data.error);
+                    }
+                    
+                } catch (error) {
+                    loading.style.display = 'none';
+                    alert('Error making prediction: ' + error.message);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
